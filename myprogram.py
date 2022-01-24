@@ -1,5 +1,5 @@
 def myprogram():
     print ("Hello World")
 
-if --name-- == "__main__":
+if __name__ == "__main__":
     myprogram()
