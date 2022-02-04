@@ -20,3 +20,11 @@ print(timenow.jd)
  
 checktime = timenow.jd-2400000.5
 print(checktime)
+
+#Use np.arange to get a few days around today's MJD
+import numpy as np
+from astropy.time import Time
+tn=Time.now()
+tn.mjd
+aroundmjd = np.arange(tn.mjd, tn.mjd+5, 1)
+print(aroundmjd)
