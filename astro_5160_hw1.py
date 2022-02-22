@@ -1,51 +1,110 @@
-import numpy as np
-from astropy.table import Table
+# ADM this code uses a range of ideas and approaches from four different
+# ADM students in the University of Wyoming's (2022) ASTR-5160 course.
+from astropy import units as u
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 from astropy.time import Time
-from astropy import units as u
-from astropy.io import ascii
-from datetime import datetime
+from astropy.table import Table
+import argparse
+import numpy as np
+from calendar import monthrange
 
-# CF Import the table of 18th mag quasars
-data=ascii.read('HW1quasarfile.txt', format='no_header')
+# ADM just hard-coding the offset between UTC and MST.
+utc_off = 7*u.hour
 
-# CF Make a list of RA and DEC for all quasars
-ra = []
-dec = []
-for i in range(len(data)):
-    x = (data[i][0][:9]) 
-    y = (data[i][0][9:])    
-    ra.append(x)
-    dec.append(y)
-    print(x, y)
 
-# CF Put RA and DEC into SkyCoord
-# CF Need in hms.ss, deg'" format, and each value of RA and DEC
-coords = SkyCoord(x*u.degree, y*u.degree, frame = 'icrs')
+def get_coords(filename):
+     """
+     Convert a .txt file containing quasars in hmsdms to a SkyCoord object.
 
-# CF Set observing location to Kitt Peak National Observatory
-kpno = EarthLocation.of_site('kpno')
-print(kpno)
+     Parameters
+     ----------
+     filename : Name of quasar file.
 
-# CF Set Time to Mountain Standard Time
-utcoffset = -7*u.hour
+     Returns
+     -------
+     SkyCoord object with quasar RAs and Decs.
+     list of quasar names.
+     """
+     # ADM read in the file.
+     quasars = Table.read(filename, format='ascii.no_header')
 
-# CF Want to get a range of times of this year at 11:00 pm MST
-# CF Want this to loop over each month, and every day in each month ??
-time = Time('2022-1-01 23:00:00') - utcoffset
+     # ADM use list comprehensions to determine the coordinates
+     ra = ["{}h{}m{}s".format(q[0:2], q[2:4], q[4:9]) for q in quasars["col1"]]
+     dec = ["{}d{}m{}s".format(q[9:12], q[12:14], q[14:18]) for q in quasars["col1"]]
+     coords = SkyCoord(ra, dec, frame='icrs')
+   
+     return coords, quasars['col1']
 
-# CF Iterate over month and day attempt
-#times = Time(datetime(2022,m,d).strftime('%B') for m in range(1, 13) & d in range(1,32)
-#for month in times & day in times
-#    print(month, day)
 
-# CF Want to find airmass of quasars
-quasaltaz = AltAz(location=kpno, obstime=time)
-loc_obs = coords.transform.to(quasaltaz) 
+def get_times(month):
+     """
+     Create astropy.time object at 6AM UTC for each day of a month.
+  
+     Parameters
+     ----------
+     month : Interger onth of the year [1-12].
 
-# CF Want to find the minimum airmass above 0
-loc_obs_airmass = loc.obs.secz
-min_airmass = min(lob.obs.secz)
-for x in xrange(len(min_airmass)):
-    if x < len(min_airmass) and min_airmass[x] < 0:
-        mi_airmasss.remove(min_airmass[x])
+     Returns
+     -------
+     list of observation times (6:00 UTC).
+     """
+     # ADM monthrange returns the number of days in a given month.
+     days = np.arange(monthrange(2022, month)[1]) + 1
+
+     # ADM create a time object at 6AM UTC or 11PM MST.
+     t = ['2022-' + str(month) + '-' + str(d) + ' 23:00:00' for d in days]
+     times = Time(t, format='iso') + utc_off
+
+     return times
+
+
+def get_airmass(filename, month):
+     """
+     Lowest-airmass object in a file that can be observed on each day in a month.
+
+     Parameters
+     ----------
+     filename : Name of quasar file as a string.
+     month : Month of the year as an integer.
+
+     Returns
+     -------
+     list of observation timestamps.
+     list of hmsdms coordinates of lowest airmass quasar.
+     list of right ascension of lowest-airmass quasar
+     list of declination of lowest-airmass quasar.
+     list of airmass of lowest-airmass quasar.
+     """
+     kpno = EarthLocation.of_site("kpno")
+
+     # ADM get needed coordinates from file.
+     coords, quasars = get_coords(filename)
+     # ADM get needed time objects for passed month.
+     times = get_times(month)
+
+     # ADM all of the required quantities without appending to anything.
+     airmasses = [coords.transform_to(AltAz(obstime=t, location=kpno)).secz for t in times]
+     ii = np.array([np.argmin(np.where(am > 0, am, 1e16)) for am in airmasses])
+     airmass = np.array([np.min(np.where(am > 0, am, 1e16)) for am in airmasses])
+
+     return times, quasars[ii], coords[ii].ra.value, coords[ii].dec.value, airmass
+
+
+if __name__ == "__main__": # AMC if quasar_airmass_homework1.py is main program
+     # ADM hardcode the filename.
+     filename = "/d/scratch/ASTR5160/week4/HW1quasarfile.txt"
+
+     description = ("Return the lowest-airmass observation of any quasar listed" 
+                    "in the file".format(filename))
+
+     parser = argparse.ArgumentParser(description=description)
+     parser.add_argument('month', type=int)
+     args = parser.parse_args()
+
+     # ADM call the function to make the table and print the result
+     time, coords, ra, dec, airmass = get_airmass(filename, args.month)
+     names = ['Date (MST)', 'Quasar Coordinates', 'RA (o)', 'Dec (o)', 'Airmass']
+     t = Table([time - utc_off, coords, ra, dec, airmass], names=names)
+
+     print(t)
+
