@@ -33,24 +33,29 @@ ra_inter, dec_inter = minter.genrand(10000)
 ra_both, dec_both = mboth.genrand(10000)
 
 # CF Plot
-plt.scatter(ra_inter, dec_inter, s = 0.8, c = 'g')
-plt.scatter(ra_both, dec_both, s = 0.8, c = 'c')
-plt.xlabel('RA')
-plt.ylabel('Dec')
-plt.title("10,000 Random Points on Both Masks")
-plt.savefig(os.path.join(webdir, "masksplot.png"))
-plt.show()
+figure1 = plt.figure()
+ax = figure1.add_subplot(111)
+ax.scatter(ra_inter, dec_inter, s = 0.8, c = 'g')
+ax.scatter(ra_both, dec_both, s = 0.8, c = 'c')
+ax.set_xlabel('RA')
+ax.set_ylabel('Dec')
+#plt.title("10,000 Random Points on Both Masks")
+figure1.savefig(os.path.join(webdir, "masksplot.png"))
+#plt.show()
 
 # CF Flip sign on intersection.ply and read it in as a mask
 mflip1 = pymangle.Mangle("intersection_flip.ply")
 
 ra_mflip, dec_mflip = mflip1.genrand(10000)
 
-plt.scatter(ra_inter, dec_inter, s = 0.8, c = 'g')
-plt.scatter(ra_mflip, dec_mflip, s = 0.8, c = 'k')
-plt.xlabel('RA')
-plt.ylabel('Dec')
-plt.title("10,000 Random Points on intersection.ply and intersection_flip.ply")
-plt.savefig(os.path.join(webdir, "inter_intflip.png"))
-plt.show()
+# CF Plot intersection.ply and intersection_flip.ply
+figure2 = plt.figure()
+ax2 = figure2.add_subplot(111)
+ax2.scatter(ra_inter, dec_inter, s = 0.8, c = 'g')
+ax2.scatter(ra_mflip, dec_mflip, s = 0.8, c = 'k')
+ax2.set_xlabel('RA')
+ax2.set_ylabel('Dec')
+#plt.title("10,000 Random Points on intersection.ply and intersection_flip.ply")
+figure2.savefig(os.path.join(webdir, "inter_intflip.png"))
+#plt.show()
 
