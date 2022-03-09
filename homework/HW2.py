@@ -42,16 +42,16 @@ def pop_spharea(ramin, ramax, decmin, decmax, n=1000000):
 
     Parameters
     ----------
-    ra_min : float, lower ra bound in radians
-    ra_max : float, upper ra bound in radians
-    dec_min : numpy.float64, lower dec bound in radians
-    dec_max : numpy.float64, upper dec bound in radians
+    ra_min : float, lower ra bound in degrees
+    ra_max : float, upper ra bound in degrees
+    dec_min : numpy.float64, lower dec bound in degrees
+    dec_max : numpy.float64, upper dec bound in degrees
     n : integer, number of points to generate, defaults to 1000000
 
     Returns
     -------
-    float, n RA values that are in the rectangle.
-    float, n Dec values that are in the rectangle.
+    array, RA values that are in the rectangle
+    array, Dec values that are in the rectangle
     """
     # CF Compute area of lat-lon rectangle    
 #    area = (180 / np.pi) * ((ramax * u.deg) - (ramin * u.deg)) * (np.sin(np.radians(decmax)) - np.sin(np.radians(decmin)))
